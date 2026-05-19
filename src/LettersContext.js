@@ -14,7 +14,8 @@ function Provider({ children }) {
     opponentEmptySpaces: [],
     round: 1,
     showOverlay: true,
-    money: 0,
+    score: 0,
+    opponentScore: 0,
     userFactories: [],
     opponentFactories: [],
   };
@@ -114,10 +115,13 @@ function Provider({ children }) {
       }
       return { ...state, opponentEmptySpaces: arr };
     }
-    if (action.type == "MONEY_ADD") {
-      let tempMoney = state.money;
-      tempMoney += action.amount;
-      return { ...state, money: tempMoney };
+    if (action.type == "SCORE_ADD") {
+      let tempScore = state.score;
+      tempScore += action.amount;
+      return { ...state, score: tempScore };
+    }
+    if (action.type == "OPPONENT_SCORE_UPDATE") {
+      return { ...state, opponentScore: action.amount };
     }
     if (action.type == "ADD_FACTORY") {
       let arr =

@@ -1,6 +1,6 @@
-import { BakeShadows, Html, OrbitControls, Sky } from "@react-three/drei";
+import { BakeShadows, Html, OrbitControls, Environment } from "@react-three/drei";
 import { Perf } from "r3f-perf";
-import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
+import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
 import PhysicsObjects from "./PhysicsObjects";
 import { useContext, useEffect, useRef, useState } from "react";
@@ -20,6 +20,7 @@ import Factory from "./Factory";
 export default function Experience() {
   const { lettersState, lettersDispatch } = useContext(lettersContext);
   const [gameStarted, setGameStarted] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
   const roundSlider = useRef();
   const overlay = useRef();
 
@@ -61,35 +62,33 @@ export default function Experience() {
     socket.on("TILES_INIT_CLIENT", ({ userTiles, opponentTiles }) => {
       handleGameStart(userTiles, opponentTiles, false);
     });
+    socket.on("SCORE_UPDATE_CLIENT", (data) => {
+      lettersDispatch({ type: "OPPONENT_SCORE_UPDATE", amount: data.score });
+    });
 
     return () => {
       socket.off("TURN_SWITCH_CLIENT");
       socket.off("TILES_INIT_CLIENT");
+      socket.off("SCORE_UPDATE_CLIENT");
     };
   }, [controls]);
 
   return (
     <>
-      <EffectComposer>
-        <Vignette
-          eskil={false}
-          offset={0.1}
-          darkness={1.1}
-          opacity={0.7}
-          blendFunction={BlendFunction.SOFT_LIGHT}
-        />
-        <Bloom mipmapBlur />
-      </EffectComposer>
+      <color attach="background" args={["#e6e6fa"]} />
+      <Environment preset="city" />
 
-      <Sky sunPosition={[1, 0.9, 3]} />
+      <EffectComposer>
+        <Bloom mipmapBlur intensity={0.5} />
+      </EffectComposer>
 
       <BakeShadows />
 
-      <Perf position="top-left" />
+      {/* <Perf position="top-left" /> */}
 
       <OrbitControls
         makeDefault
-        enablePan={false}
+        enablePan={true}
         enabled={true}
         autoRotate={!gameStarted}
         autoRotateSpeed={0.5}
@@ -97,31 +96,70 @@ export default function Experience() {
 
       <directionalLight
         castShadow
-        position={[1, 0.9, 3]}
+        position={[5, 10, 5]}
         intensity={1.5}
-        shadow-mapSize={[512, 512]}
-        shadow-camera-far={20}
-        shadow-camera-near={-20}
-        shadow-camera-left={-15}
-        shadow-camera-right={15}
+        shadow-mapSize={[1024, 1024]}
+        shadow-camera-far={50}
+        shadow-camera-near={-50}
+        shadow-camera-left={-20}
+        shadow-camera-right={20}
         shadow-camera-top={20}
         shadow-camera-bottom={-20}
       />
-      <ambientLight intensity={0.3} />
+      <ambientLight intensity={0.5} />
 
-      <Html transform position={[0, 5, -20]}>
+      <Html fullscreen style={{ pointerEvents: "none", zIndex: 5 }}>
         <UserInterface
           camera={camera}
           controls={controls}
           lettersState={lettersState}
+          setShowInstructions={setShowInstructions}
         />
       </Html>
+
+      {gameStarted && lettersState.turn !== null && lettersState.turn !== socket.id && (
+        <Html fullscreen style={{ pointerEvents: "none", zIndex: 10 }}>
+          <div style={{
+            position: "absolute",
+            top: "20px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(255, 0, 0, 0.8)",
+            color: "white",
+            padding: "1rem 2rem",
+            fontSize: "2rem",
+            fontWeight: "bold",
+            borderRadius: "10px",
+            fontFamily: "sans-serif",
+            letterSpacing: "2px",
+            boxShadow: "0px 4px 10px rgba(0,0,0,0.5)"
+          }}>
+            OPPONENT'S TURN
+          </div>
+        </Html>
+      )}
+
+      {showInstructions && (
+        <Html fullscreen zIndexRange={[100, 0]}>
+          <div className="centered instructions-modal">
+            <h2>How to Play PolyWord</h2>
+            <ul>
+              <li>Drag letters from your rack to form words on the board.</li>
+              <li>Words must connect to existing tiles (except for the first turn).</li>
+              <li><strong>Controls:</strong> Zoom with your scroll wheel. Move around with left click and drag.</li>
+              <li>Words are scored based on the letters used and word length.</li>
+              <li>Click "End Turn" when you are finished placing your word.</li>
+            </ul>
+            <button onClick={() => setShowInstructions(false)}>Close</button>
+          </div>
+        </Html>
+      )}
 
         <Html fullscreen wrapperClass="start__menu" ref={overlay} style={{transform:`translateY(${lettersState.showOverlay ? '0px' : '200vh'})`}}>
           <div className="centered start__menu__content">
             <ul>
               <li onClick={() => handleGameStart()}>Start</li>
-              <li>Instructions</li>
+              <li onClick={() => setShowInstructions(true)}>Instructions</li>
               <li>Quit</li>
             </ul>
           </div>

@@ -108,7 +108,6 @@ const Letter = forwardRef(
           );
         } else {
           let childrenPosition = groupRef.current.children[0].position;
-          groupRef.current.children[0].geometry.computeBoundingBox();
           const checkBoardValidVector3 = new Vector3(
             Math.round(childrenPosition.x),
             Math.round(childrenPosition.y),
@@ -129,13 +128,13 @@ const Letter = forwardRef(
             if (draggable) {
               gsap.to(groupRef.current.children[0].position, {
                 x: Math.round(childrenPosition.x),
-                y: Math.round(childrenPosition.y),
+                y: 0.5,
                 z: Math.round(childrenPosition.z),
                 duration: 0.5,
                 onComplete: () => {
                   const finalPos = new Vector3(
                     Math.round(childrenPosition.x),
-                    Math.round(childrenPosition.y),
+                    0.5,
                     Math.round(childrenPosition.z)
                   );
                   lettersDispatch({
@@ -269,9 +268,8 @@ const Letter = forwardRef(
                 scale={[0.5, 1, 0.5]}
                 object={tilesGLTF.scene.children[alphabet.indexOf(letters[0])]}
               >
-                {/* <meshStandardMaterial color={[0,0,0]} emissive='red' emissiveIntensity={3} toneMapped={false}/> */}
-                {/* [0.277,0.292,0.305] */}
                 <meshBasicMaterial
+                  ref={materialRef}
                   color={[0.277, 0.292, 0.305]}
                   toneMapped={false}
                 />

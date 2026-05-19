@@ -3,9 +3,18 @@ import checkDirectionOfPlay from "./checkDirectionOfPlay";
 import findStart from "./findStart";
 import words from "./WORDS";
 const endTurn = ({lastTurn, board}, lettersDispatch) => {
-    const firstVal = lastTurn[0].vec3;
-    const secondVal = lastTurn[1].vec3;
-    const directionOfPlay = checkDirectionOfPlay(firstVal, secondVal);
+    if (lastTurn.length === 0) return {status:false, word: "", vectors: []};
+
+    let directionOfPlay = "x";
+    if (lastTurn.length > 1) {
+        directionOfPlay = checkDirectionOfPlay(lastTurn[0].vec3, lastTurn[1].vec3);
+    } else {
+        const surroundingZ = board.filter(input => input.vec3.x === lastTurn[0].vec3.x && Math.abs(input.vec3.z - lastTurn[0].vec3.z) === 1);
+        if (surroundingZ.length > 0) {
+            directionOfPlay = "z";
+        }
+    }
+
     const oppositeDirectionOfPlay = directionOfPlay === "z" ? "x" : "z";
     let wordsToCheck = [];
     let letterVectors = [];
@@ -45,7 +54,7 @@ const endTurn = ({lastTurn, board}, lettersDispatch) => {
     if(words.includes(finalVerticalLetter)){
         const wordMoney = calculateMoney(finalVerticalLetter.split(""));
         lettersDispatch({type:"BOARD_UPDATE"});
-        lettersDispatch({type:"MONEY_ADD", amount: wordMoney});
+        lettersDispatch({type:"SCORE_ADD", amount: wordMoney});
         return {status:true, word: finalVerticalLetter, vectors: letterVectors, money: wordMoney};
     }
     return {status:false, word: finalVerticalLetter, vectors: letterVectors};

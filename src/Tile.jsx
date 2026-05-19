@@ -1,5 +1,5 @@
-import { Color, TextureLoader, Vector3 } from "three";
-import { useFrame, useLoader, useThree } from "@react-three/fiber";
+import { Color, Vector3 } from "three";
+import { useFrame, useThree } from "@react-three/fiber";
 import { RigidBody } from "@react-three/rapier";
 import { useRef, useState, useContext, useReducer, useMemo } from "react";
 import Letter from "./Letter";
@@ -73,26 +73,11 @@ function Tile({ roundSlider, overlay }) {
   };
   const [state, dispatch] = useReducer(draggableReducer, initialDraggable);
 
-  const [ao, arm, bump, map, disp, nor, rough] = useLoader(TextureLoader, [
-    "/Nature/textures/grass_path_3_ao_2k.jpg",
-    "/Nature/textures/grass_path_3_arm_2k.jpg",
-    "/Nature/textures/grass_path_3_bump_2k.jpg",
-    "/Nature/textures/grass_path_3_diff_2k.jpg",
-    "/Nature/textures/grass_path_3_disp_2k.png",
-    "/Nature/textures/grass_path_3_nor_dx_2k.jpg",
-    "/Nature/textures/grass_path_3_rough_2k.jpg",
-  ]);
-
   const handlePointerMove = (e) => {
     for (let i = 0; i < state.length; i++) {
       if (state[i] !== undefined) {
         if (state[i].draggable) {
-          const roundedPosition = new Vector3(
-            Math.round(moveable.current[i].position.x),
-            -0,
-            Math.round(moveable.current[i].position.z)
-          );
-          moveable.current[i].position.set(e.point.x, e.point.y, e.point.z);
+          moveable.current[i].position.set(e.point.x, 0.5, e.point.z);
         }
       }
     }
@@ -140,36 +125,36 @@ function Tile({ roundSlider, overlay }) {
     if (turnResult.status) {
       lettersDispatch({ type: "ROUND_INCREMENT" });
       socket.emit("END_TURN");
+      socket.emit("SCORE_UPDATE", { score: lettersState.score + turnResult.money });
     }
   };
 
   return (
     <>
-      <RigidBody type="static">
+      <RigidBody type="fixed">
         <mesh
-          rotation-x={-Math.PI / 2}
+          position={[0, -50, 0]}
           receiveShadow
           castShadow
           onPointerMove={(e) => handlePointerMove(e)}
         >
-          <planeGeometry args={[25, 25]} />
-          <meshStandardMaterial
-            aoMap={ao}
-            metalnessMap={arm}
-            bumpMap={bump}
-            map={map}
-            displacementMap={disp}
-            normalMap={nor}
-            roughnessMap={rough}
-          />
+          <boxGeometry args={[200, 100, 200]} />
+          <meshStandardMaterial color="#1a1a1a" roughness={0.8} />
         </mesh>
+
+        <mesh position={[0, 0.01, 0]} receiveShadow>
+          <boxGeometry args={[26, 0.02, 26]} />
+          <meshStandardMaterial color="#2d2d2d" roughness={0.7} metalness={0.2} />
+        </mesh>
+        
+        <gridHelper args={[26, 26, '#4CAF50', '#444']} position={[0.5, 0.021, 0.5]} />
       </RigidBody>
 
       {lettersState.userTiles.map(
         ({ letter, startingPos, animatingFrom }, idx) => {
           let startingPosID = [
-            -2 + idx - 10 * Math.floor(idx / 10),
-            1,
+            -6.75 + (idx % 10) * 1.5,
+            0.5,
             15 + Math.floor(idx / 10),
           ];
 
@@ -182,13 +167,13 @@ function Tile({ roundSlider, overlay }) {
               animatingFrom={animatingFrom}
               letters={[letter]}
               type={idx}
-              ref={(el) =>
-                (moveable.current[idx] = {
-                  ...el,
-                  LETTER: letter,
-                  POSITION_ID: new Vector3().fromArray(startingPosID),
-                })
-              }
+              ref={(el) => {
+                if (el) {
+                  el.LETTER = letter;
+                  el.POSITION_ID = new Vector3().fromArray(startingPosID);
+                  moveable.current[idx] = el;
+                }
+              }}
               dispatch={dispatch}
               draggable={
                 state.length > 0
@@ -206,39 +191,26 @@ function Tile({ roundSlider, overlay }) {
       )}
       <OpponentTiles ref={opponentTiles} />
 
-      {/* {lettersState.userFactories.map((i, idx) => {
-        return (
-          <Factory key={idx} type={i.type} position={i.position} user="user" round={i.round} />
-        );
-      })}
-      {lettersState.opponentFactories.map((i, idx) => {
-        return (
-          <Factory
-            key={idx}
-            type={i.type}
-            position={i.position}
-            user="opponent"
-            round={i.round}
-          />
-        );
-      })} */}
-
-      <Html transform position={[0, 5, -20]}>
-        <div style={{ position: "absolute", top: "-12rem", left: "-30rem" }}>
+      <Html fullscreen style={{ pointerEvents: "none", zIndex: 5 }}>
+        <div className="ui-money-container">
+          <div className="money-label">Score</div>
+          <div className="money-value">{lettersState.score}</div>
+          
+          <div className="money-label" style={{marginTop: '15px'}}>Opponent Score</div>
+          <div className="money-value" style={{color: '#e74c3c'}}>{lettersState.opponentScore}</div>
+        </div>
+        
+        <div className="ui-action-container">
           <button
             onClick={() =>
               (lettersState.turn === null || lettersState.turn === socket.id) &&
               handleEndTurn()
             }
-            className="endTurn"
+            className={`modern-btn action-btn ${lettersState.turn !== null && lettersState.turn !== socket.id ? 'disabled' : ''}`}
           >
             End Turn
           </button>
         </div>
-        <div style={{ position: "absolute", top: "-17rem", left: "0rem" }}>
-          <p className="money__text">${lettersState.money}</p>
-        </div>
-        {/* <Shop purchaseFactory={purchaseFactory} /> */}
       </Html>
     </>
   );

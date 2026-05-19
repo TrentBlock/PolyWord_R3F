@@ -1,20 +1,24 @@
 const express = require("express");
 const app = express();
 const http = require("http");
+const path = require("path");
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server, {
   path: "/socket",
-  cors: { origin: ["http://localhost:3000"] },
+  cors: { origin: "*" },
 });
 
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
+// Serve static files from the React app build directory
+app.use(express.static(path.join(__dirname, "../build")));
+
+// Handles any requests that don't match the ones above
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../build", "index.html"));
 });
 
 io.on("connection", (socket) => {
   console.log("a user connected");
-  // socket.broadcast.emit("TURN_SWITCH_CLIENT",{user: socket.id});
   
   socket.on('disconnect', () => {
     console.log('user disconnected');
@@ -49,6 +53,10 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("SPACE_REMOVED_CLIENT");
   })
 
+  socket.on("SCORE_UPDATE", (data) => {
+    socket.broadcast.emit("SCORE_UPDATE_CLIENT", data);
+  });
+
   socket.on("END_TURN", ()=>{
     console.log("ended");
     socket.broadcast.emit('END_TURN_CLIENT');
@@ -68,6 +76,7 @@ io.on("connection", (socket) => {
   })
 });
 
-server.listen(3001, () => {
-  console.log("listening on PORT 3001");
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+  console.log("listening on PORT " + PORT);
 });

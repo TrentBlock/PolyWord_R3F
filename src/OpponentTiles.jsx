@@ -28,9 +28,13 @@ const OpponentTiles = forwardRef((props, ref) => {
         -data.POSITION_ID.z
       );
       const tileToAnimate = tiles.current.find((c) =>
-        c.POSITION_ID.equals(pos)
+        c && c.POSITION_ID && c.POSITION_ID.distanceTo(pos) < 0.1
       );
-      objectAnimation(tileToAnimate, data.vec3, 1, new Vector3(0, 0, 0));
+      if (tileToAnimate) {
+        objectAnimation(tileToAnimate, data.vec3, 1, new Vector3(0, 0, 0));
+      } else {
+        console.warn("Tile to animate not found for LETTER_RECEIVED", pos);
+      }
     });
 
     socket.on("LETTER_REMOVED_CLIENT", (data) => {
@@ -43,11 +47,15 @@ const OpponentTiles = forwardRef((props, ref) => {
         -data.POSITION_ID.z
       );
       const tileToAnimate = tiles.current.find((c) =>
-        c.POSITION_ID.equals(pos)
+        c && c.POSITION_ID && c.POSITION_ID.distanceTo(pos) < 0.1
       );
-      let posToMove = data.posToMove;
-      posToMove.z = -posToMove.z;
-      objectAnimation(tileToAnimate, posToMove, 1, new Vector3(0, -Math.PI, 0));
+      if (tileToAnimate) {
+        let posToMove = data.posToMove;
+        posToMove.z = -posToMove.z;
+        objectAnimation(tileToAnimate, posToMove, 1, new Vector3(0, -Math.PI, 0));
+      } else {
+        console.warn("Tile to animate not found for LETTER_REMOVED", pos);
+      }
       console.log(lettersState.userLetterHolder);
     });
 
@@ -78,57 +86,28 @@ const OpponentTiles = forwardRef((props, ref) => {
 
   return (
     <group ref={ref}>
-      {/* {lettersState.opponentLetterHolder.map(
-        (letter, idx) => {
-          if(letter){
-            let zPos = Math.floor(idx/10) - 15;
-            let xPos = 5 - ((Math.ceil(idx/10)*10) - idx);
-            return (
-              <Letter
-                key={idx}
-                position={[xPos, 0.7, zPos]}
-                letters={[letter.tile]}
-                type={null}
-                ref={(el) => (tiles.current[idx] = {...el, LETTER: letter.tile, POSITION_ID:new Vector3(xPos, 0.7, zPos)})}
-                dispatch={() => {}}
-                draggable={false}
-                defaultLocked={true}
-                isUser={false}
-              />
-            );
-          }
-          return null;
-        }
-      )} */}
       {lettersState.opponentTiles.map(
         ({ letter, startingPos, animatingFrom }, idx) => {
           let startingPosID = [
-            -2 + idx - 10 * Math.floor(idx / 10),
-            1,
+            -6.75 + (idx % 10) * 1.5,
+            0.5,
             -15 - Math.floor(idx / 10),
           ];
-          // if(lettersState.opponentEmptySpaces.length > 0){
-          //   if((lettersState.opponentEmptySpaces[0].z <= 15 + Math.floor(idx/10)) && (lettersState.opponentEmptySpaces[0].x <= -2 + idx)){
-          //     startingPos = lettersState.opponentEmptySpaces[0];
-          //     lettersDispatch({type:"REMOVE_EMPTY_SPACE", user:"opponent"});
-          //   }
-          // }
           return (
             <Letter
               key={idx}
               position={startingPosID}
               animatingFrom={animatingFrom}
-              // startingPos = {startingPos ? [startingPos.x, startingPos.y, startingPos.z] : [-2 + idx, 1, -15 - Math.floor(idx/10)]}
               startingPos={startingPos || startingPosID}
               letters={[letter]}
               type={idx}
-              ref={(el) =>
-                (tiles.current[idx] = {
-                  ...el,
-                  LETTER: letter,
-                  POSITION_ID: new Vector3().fromArray(startingPosID),
-                })
-              }
+              ref={(el) => {
+                if (el) {
+                  el.LETTER = letter;
+                  el.POSITION_ID = new Vector3().fromArray(startingPosID);
+                  tiles.current[idx] = el;
+                }
+              }}
               dispatch={() => {}}
               draggable={false}
               defaultLocked={true}

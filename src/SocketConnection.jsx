@@ -1,7 +1,9 @@
 import io from 'socket.io-client';
 import { useState, useEffect } from 'react';
 
-const socket = io('http://localhost:3001', {path:'/socket'});
+// Use window.location.origin in production to connect to the backend serving the React build.
+const backendUrl = process.env.NODE_ENV === 'production' ? window.location.origin : 'http://localhost:3001';
+const socket = io(backendUrl, { path: '/socket' });
 
 function SocketConnection() {
   const [isConnected, setIsConnected] = useState(socket.connected);

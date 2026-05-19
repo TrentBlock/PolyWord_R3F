@@ -41,11 +41,11 @@ const createNewTile = (
         newTile.startingPos[1],
         -Math.abs(newTile.startingPos[2]),
       ],
-      animatingFrom: animatingFrom || [
+      animatingFrom: animatingFrom ? [
         -animatingFrom[0],
         animatingFrom[1],
         animatingFrom[2],
-      ],
+      ] : null,
     };
     console.log(flippedTile);
     flippedUserTiles = flippedUserTiles.concat([flippedTile]);
