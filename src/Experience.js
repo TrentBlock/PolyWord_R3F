@@ -161,7 +161,13 @@ export default function Experience() {
       )}
 
         <Html fullscreen wrapperClass="start__menu" ref={overlay} style={{transform:`translateY(${lettersState.showOverlay ? '0px' : '200vh'})`}}>
-          <div className="centered start__menu__content">
+          <div className="centered start__menu__content" style={{ textAlign: 'center' }}>
+            <div className="multiplayer-alert">
+              ⚠️ Multiplayer Only: 2 Players Required<br/>
+              <span style={{ fontSize: '1.2rem', textTransform: 'none', opacity: 0.9 }}>
+                Open this game in two separate browser windows to play against yourself or a friend!
+              </span>
+            </div>
             <ul>
               <li onClick={() => handleGameStart()}>Start</li>
               <li onClick={() => setShowInstructions(true)}>Instructions</li>

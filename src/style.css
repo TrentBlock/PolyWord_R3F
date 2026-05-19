@@ -132,6 +132,27 @@ body,
     cursor: pointer;
 }
 .instructions-modal button:hover { background: #45a049; }
+.multiplayer-alert {
+    background: #e74c3c;
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 3rem;
+    font-weight: 700;
+    font-size: 1.8rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    box-shadow: 0 10px 40px rgba(231, 76, 60, 0.4);
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
 .start__menu > div{
     background:rgba(41, 41, 41, 0.6);
     position: relative;
