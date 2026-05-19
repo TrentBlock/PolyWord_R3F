@@ -56,22 +56,27 @@ export default function Experience() {
   };
 
   useEffect(() => {
-    socket.on("TURN_SWITCH_CLIENT", ({ user }) => {
+    const handleTurnSwitch = ({ user }) => {
       lettersDispatch({ type: "TURN_SWITCH", turn: user });
-    });
-    socket.on("TILES_INIT_CLIENT", ({ userTiles, opponentTiles }) => {
+    };
+    const handleTilesInit = ({ userTiles, opponentTiles }) => {
       handleGameStart(userTiles, opponentTiles, false);
-    });
-    socket.on("SCORE_UPDATE_CLIENT", (data) => {
+    };
+    const handleScoreUpdate = (data) => {
+      console.log("Client received score update:", data);
       lettersDispatch({ type: "OPPONENT_SCORE_UPDATE", amount: data.score });
-    });
+    };
+
+    socket.on("TURN_SWITCH_CLIENT", handleTurnSwitch);
+    socket.on("TILES_INIT_CLIENT", handleTilesInit);
+    socket.on("SCORE_UPDATE_CLIENT", handleScoreUpdate);
 
     return () => {
-      socket.off("TURN_SWITCH_CLIENT");
-      socket.off("TILES_INIT_CLIENT");
-      socket.off("SCORE_UPDATE_CLIENT");
+      socket.off("TURN_SWITCH_CLIENT", handleTurnSwitch);
+      socket.off("TILES_INIT_CLIENT", handleTilesInit);
+      socket.off("SCORE_UPDATE_CLIENT", handleScoreUpdate);
     };
-  }, [controls]);
+  }, []);
 
   return (
     <>
